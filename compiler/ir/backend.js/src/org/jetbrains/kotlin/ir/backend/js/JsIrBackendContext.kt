@@ -229,6 +229,8 @@ class JsIrBackendContext(
 
     // classes forced to be loaded
 
+    val errorSymbol: IrSimpleFunctionSymbol = symbolTable.referenceSimpleFunction(getJsInternalFunction("errorCode"))
+
     val primitiveClassesObject = getIrClass(FqName("kotlin.reflect.js.internal.PrimitiveClasses"))
 
     val throwableClass = getIrClass(JsIrBackendContext.KOTLIN_PACKAGE_FQN.child(Name.identifier("Throwable")))
