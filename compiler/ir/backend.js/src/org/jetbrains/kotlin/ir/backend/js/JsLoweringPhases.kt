@@ -514,6 +514,12 @@ private val multipleCatchesLoweringPhase = makeBodyLoweringPhase(
     description = "Replace multiple catches with single one"
 )
 
+private val errorExpressionLoweringPhase = makeJsModulePhase(
+    ::JsErrorExpressionLowering,
+    name = "errorExpressionLoweringPhase",
+    description = "Transform error elements into simple ir code"
+).toModuleLowering()
+
 private val bridgesConstructionPhase = makeDeclarationTransformerPhase(
     ::BridgesConstruction,
     name = "BridgesConstruction",
@@ -534,7 +540,7 @@ private val typeOperatorLoweringPhase = makeBodyLoweringPhase(
     prerequisite = setOf(
         bridgesConstructionPhase,
         removeInlineFunctionsWithReifiedTypeParametersLoweringPhase,
-        singleAbstractMethodPhase
+        singleAbstractMethodPhase, errorExpressionLoweringPhase
     )
 )
 
@@ -707,6 +713,7 @@ val loweringList = listOf<Lowering>(
     es6ConstructorLowering,
     varargLoweringPhase,
     multipleCatchesLoweringPhase,
+    errorExpressionLoweringPhase,
     bridgesConstructionPhase,
     typeOperatorLoweringPhase,
     secondaryConstructorLoweringPhase,
