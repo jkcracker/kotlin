@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.js.lower.calls
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
@@ -33,19 +35,21 @@ class CallsLowering(val context: JsIrBackendContext) : BodyLoweringPass {
     )
 
     override fun lower(irBody: IrBody, container: IrDeclaration) {
-        if (container is IrFunction && container.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol)) return
+//        if (container is IrFunction && container.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol)) return
 
-        irBody.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitFunction(declaration: IrFunction): IrStatement {
-                if (declaration.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol))
-                    return declaration
-                return super.visitFunction(declaration)
+        irBody.transformChildren(object : IrElementTransformer<IrDeclaration> {
+            override fun visitFunction(declaration: IrFunction, data: IrDeclaration): IrStatement {
+                return super.visitFunction(declaration, declaration)
             }
 
-            override fun visitFunctionAccess(expression: IrFunctionAccessExpression): IrExpression {
-                val call = super.visitFunctionAccess(expression)
+            override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrDeclaration): IrElement {
+                val call = super.visitFunctionAccess(expression, data)
+                val doNotIntrinsify = data.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol)
                 if (call is IrFunctionAccessExpression) {
                     for (transformer in transformers) {
+                        if (doNotIntrinsify) {
+                            if (transformer is PrimitiveContainerMemberCallTransformer) continue
+                        }
                         val newCall = transformer.transformFunctionAccess(call)
                         if (newCall !== call) {
                             return newCall
@@ -54,7 +58,7 @@ class CallsLowering(val context: JsIrBackendContext) : BodyLoweringPass {
                 }
                 return call
             }
-        })
+        }, container)
     }
 }
 
