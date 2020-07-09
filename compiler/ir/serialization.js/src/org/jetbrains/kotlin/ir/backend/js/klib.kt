@@ -407,7 +407,7 @@ private class ModulesStructure(
             compareMetadataAndGoToNextICRoundIfNeeded(analysisResult, compilerConfiguration, files)
         }
 
-        if (!errorPolicy.allowErrors || (analyzer.hasErrors() || analysisResult !is JsAnalysisResult))
+        if (!errorPolicy.allowErrors && analyzer.hasErrors() || analysisResult !is JsAnalysisResult)
             throw JsIrCompilationError
 
         TopDownAnalyzerFacadeForJSIR.checkForErrors(files, analysisResult.bindingContext, errorPolicy)
