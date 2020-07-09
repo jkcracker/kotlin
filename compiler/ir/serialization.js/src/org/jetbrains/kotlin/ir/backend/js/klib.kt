@@ -224,7 +224,7 @@ fun loadIr(
 ): IrModuleInfo {
     val depsDescriptors = ModulesStructure(project, mainModule, analyzer, configuration, allDependencies, friendDependencies)
     val deserializeFakeOverrides = configuration.getBoolean(CommonConfigurationKeys.DESERIALIZE_FAKE_OVERRIDES)
-    val errorPolicy = ErrorIgnorancePolicy.ALL // configuration.get(JSConfigurationKeys.ERROR_IGNORANCE_POLICY) ?: ErrorIgnorancePolicy.DEFAULT
+    val errorPolicy = configuration.get(JSConfigurationKeys.ERROR_IGNORANCE_POLICY) ?: ErrorIgnorancePolicy.DEFAULT
 
     when (mainModule) {
         is MainModule.SourceFiles -> {
