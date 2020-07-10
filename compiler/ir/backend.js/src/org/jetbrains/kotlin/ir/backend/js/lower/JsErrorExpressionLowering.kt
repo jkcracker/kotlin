@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.ir.backend.js.lower
 
+import org.jetbrains.kotlin.backend.common.lower.ErrorDeclarationLowering
 import org.jetbrains.kotlin.backend.common.lower.ErrorExpressionLowering
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
@@ -19,6 +19,28 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrBlockBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.name.Name
+
+class JsErrorDeclarationLowering(context: JsIrBackendContext) : ErrorDeclarationLowering() {
+    private val nothingType = context.irBuiltIns.nothingType
+    private val stringType = context.irBuiltIns.stringType
+    private val errorSymbol = context.errorSymbol
+
+    override fun transformErrorDeclaration(declaration: IrErrorDeclaration): IrDeclaration {
+        return with(IrFunctionBuilder()) {
+            updateFrom(declaration)
+            returnType = nothingType
+            name = Name.identifier("\$errorDeclaration")
+            buildFun().also {
+                it.parent = declaration.parent
+                it.body = IrBlockBodyImpl(startOffset, endOffset) {
+                    statements += IrCallImpl(startOffset, endOffset, nothingType, errorSymbol, 0, 1, null, null).apply {
+                        putValueArgument(0, IrConstImpl.string(startOffset, endOffset, stringType, "ERROR DECLARATION"))
+                    }
+                }
+            }
+        }
+    }
+}
 
 class JsErrorExpressionLowering(context: JsIrBackendContext) : ErrorExpressionLowering(context) {
 
@@ -35,18 +57,6 @@ class JsErrorExpressionLowering(context: JsIrBackendContext) : ErrorExpressionLo
         return element.run {
             IrCallImpl(startOffset, endOffset, nothingType, errorSymbol, 0, 1, null, null).apply {
                 putValueArgument(0, IrConstImpl.string(startOffset, endOffset, stringType, description))
-            }
-        }
-    }
-
-    override fun transformErrorDeclaration(declaration: IrErrorDeclaration): IrDeclaration {
-        return with(IrFunctionBuilder()) {
-            updateFrom(declaration)
-            returnType = nothingType
-            name = Name.identifier("\$errorDeclaration")
-            buildFun().also {
-                it.parent = declaration.parent
-                it.body = IrBlockBodyImpl(startOffset, endOffset, listOf(buildThrowError(declaration, "ERROR DECLARATION")))
             }
         }
     }

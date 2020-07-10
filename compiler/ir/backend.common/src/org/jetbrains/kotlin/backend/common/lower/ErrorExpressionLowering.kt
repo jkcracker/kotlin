@@ -5,30 +5,33 @@
 
 package org.jetbrains.kotlin.backend.common.lower
 
+import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
-import org.jetbrains.kotlin.backend.common.FileLoweringPass
-import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.backend.common.DeclarationTransformer
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrErrorDeclaration
-import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.expressions.IrErrorCallExpression
-import org.jetbrains.kotlin.ir.expressions.IrErrorExpression
-import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.types.IrErrorType
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
-abstract class ErrorExpressionLowering(context: CommonBackendContext) : FileLoweringPass {
+abstract class ErrorDeclarationLowering : DeclarationTransformer {
+    abstract fun transformErrorDeclaration(declaration: IrErrorDeclaration): IrDeclaration
+    override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
+        if (declaration is IrErrorDeclaration) return listOf(transformErrorDeclaration(declaration))
+        return null
+    }
+}
+
+abstract class ErrorExpressionLowering(context: CommonBackendContext) : BodyLoweringPass {
 
     protected val nothingType = context.irBuiltIns.nothingType
 
     abstract fun transformErrorExpression(expression: IrExpression, nodeString: String): IrExpression
-    abstract fun transformErrorDeclaration(declaration: IrErrorDeclaration): IrDeclaration
 
-    override fun lower(irFile: IrFile) {
-        irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
+    override fun lower(irBody: IrBody, container: IrDeclaration) {
+        irBody.transformChildrenVoid(object : IrElementTransformerVoid() {
 
             override fun visitErrorExpression(expression: IrErrorExpression): IrExpression {
                 return transformErrorExpression(expression, "Error Expression")
@@ -46,17 +49,15 @@ abstract class ErrorExpressionLowering(context: CommonBackendContext) : FileLowe
                 }
             }
 
-            override fun visitErrorDeclaration(declaration: IrErrorDeclaration): IrStatement {
-                return transformErrorDeclaration(declaration)
-            }
-
             override fun visitTypeOperator(expression: IrTypeOperatorCall): IrExpression {
                 expression.transformChildrenVoid(this)
                 if (expression.typeOperand is IrErrorType) {
                     return expression.run {
-                        IrCompositeImpl(startOffset, endOffset, nothingType, null, listOf(
-                            argument, transformErrorExpression(this, "Error Type")
-                        ))
+                        IrCompositeImpl(
+                            startOffset, endOffset, nothingType, null, listOf(
+                                argument, transformErrorExpression(this, "Error Type")
+                            )
+                        )
                     }
                 }
 
