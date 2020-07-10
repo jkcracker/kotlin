@@ -47,10 +47,7 @@ class CallsLowering(val context: JsIrBackendContext) : BodyLoweringPass {
                 val doNotIntrinsify = data.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol)
                 if (call is IrFunctionAccessExpression) {
                     for (transformer in transformers) {
-                        if (doNotIntrinsify) {
-                            if (transformer is PrimitiveContainerMemberCallTransformer) continue
-                        }
-                        val newCall = transformer.transformFunctionAccess(call)
+                        val newCall = transformer.transformFunctionAccess(call, doNotIntrinsify)
                         if (newCall !== call) {
                             return newCall
                         }
@@ -63,5 +60,5 @@ class CallsLowering(val context: JsIrBackendContext) : BodyLoweringPass {
 }
 
 interface CallsTransformer {
-    fun transformFunctionAccess(call: IrFunctionAccessExpression): IrExpression
+    fun transformFunctionAccess(call: IrFunctionAccessExpression, skip: Boolean): IrExpression
 }

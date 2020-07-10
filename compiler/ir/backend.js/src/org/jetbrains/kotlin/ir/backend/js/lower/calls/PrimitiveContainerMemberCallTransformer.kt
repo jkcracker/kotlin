@@ -59,7 +59,8 @@ class PrimitiveContainerMemberCallTransformer(private val context: JsIrBackendCo
         }
     }
 
-    override fun transformFunctionAccess(call: IrFunctionAccessExpression): IrExpression {
+    override fun transformFunctionAccess(call: IrFunctionAccessExpression, skip: Boolean): IrExpression {
+        if (skip) return call
         symbolToTransformer[call.symbol]?.let {
             return it(call)
         }

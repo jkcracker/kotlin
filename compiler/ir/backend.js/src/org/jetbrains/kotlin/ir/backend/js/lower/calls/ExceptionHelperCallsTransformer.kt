@@ -27,6 +27,6 @@ class ExceptionHelperCallsTransformer(private val context: JsIrBackendContext) :
         context.irBuiltIns.noWhenBranchMatchedExceptionSymbol to referenceFunction(kotlinPackageFqn.child(Name.identifier("noWhenBranchMatchedException")))
     )
 
-    override fun transformFunctionAccess(call: IrFunctionAccessExpression) =
+    override fun transformFunctionAccess(call: IrFunctionAccessExpression, skip: Boolean) =
         helperMapping[call.symbol]?.let { irCall(call, it) } ?: call
 }

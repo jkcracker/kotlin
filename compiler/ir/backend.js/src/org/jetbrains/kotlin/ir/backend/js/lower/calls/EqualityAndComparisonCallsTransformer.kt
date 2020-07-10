@@ -60,14 +60,14 @@ class EqualityAndComparisonCallsTransformer(context: JsIrBackendContext) : Calls
         }
     }
 
-    override fun transformFunctionAccess(call: IrFunctionAccessExpression): IrExpression {
+    override fun transformFunctionAccess(call: IrFunctionAccessExpression, skip: Boolean): IrExpression {
         val symbol = call.symbol
         symbolToTransformer[symbol]?.let {
             return it(call)
         }
 
         return when (symbol.owner.name) {
-            Name.identifier("compareTo") -> transformCompareToMethodCall(call)
+            Name.identifier("compareTo") -> if (skip) call else transformCompareToMethodCall(call)
             Name.identifier("equals") -> transformEqualsMethodCall(call as IrCall)
             else -> call
         }
