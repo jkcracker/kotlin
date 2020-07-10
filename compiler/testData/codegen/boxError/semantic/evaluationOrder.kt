@@ -28,3 +28,4 @@ fun box(): String {
         return if (storage == "abc") "OK" else "FAIL ABC"
         return "FAIL"
     }
+}
