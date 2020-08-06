@@ -9,13 +9,11 @@ import org.jetbrains.kotlin.backend.common.lower.ErrorDeclarationLowering
 import org.jetbrains.kotlin.backend.common.lower.ErrorExpressionLowering
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
-import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrErrorDeclaration
 import org.jetbrains.kotlin.ir.expressions.IrErrorExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.impl.IrBlockBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.name.Name
@@ -24,19 +22,19 @@ class JsErrorDeclarationLowering(context: JsIrBackendContext) : ErrorDeclaration
     private val nothingType = context.irBuiltIns.nothingType
     private val stringType = context.irBuiltIns.stringType
     private val errorSymbol = context.errorSymbol
+    private val irFactory = context.irFactory
 
     override fun transformErrorDeclaration(declaration: IrErrorDeclaration): IrDeclaration {
         require(errorSymbol != null) { "Should be non-null if errors are allowed" }
-        return with(IrFunctionBuilder()) {
+        return irFactory.buildFun {
             updateFrom(declaration)
             returnType = nothingType
             name = Name.identifier("\$errorDeclaration")
-            buildFun().also {
-                it.parent = declaration.parent
-                it.body = IrBlockBodyImpl(startOffset, endOffset) {
-                    statements += IrCallImpl(startOffset, endOffset, nothingType, errorSymbol, 0, 1, null, null).apply {
-                        putValueArgument(0, IrConstImpl.string(startOffset, endOffset, stringType, "ERROR DECLARATION"))
-                    }
+        }.also {
+            it.parent = declaration.parent
+            it.body = irFactory.createBlockBody(it.startOffset, it.endOffset) {
+                statements += IrCallImpl(startOffset, endOffset, nothingType, errorSymbol, 0, 1, null, null).apply {
+                    putValueArgument(0, IrConstImpl.string(startOffset, endOffset, stringType, "ERROR DECLARATION"))
                 }
             }
         }

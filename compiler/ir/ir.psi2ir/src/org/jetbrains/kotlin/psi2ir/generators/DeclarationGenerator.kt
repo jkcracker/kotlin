@@ -60,7 +60,7 @@ class DeclarationGenerator(override val context: GeneratorContext) : Generator {
             }
         } catch (e: Throwable) {
             if (context.configuration.ignoreErrors) {
-                IrErrorDeclarationImpl(
+                context.irFactory.createErrorDeclaration(
                     ktDeclaration.startOffsetSkippingComments, ktDeclaration.endOffset,
                     getOrFail(BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration)
                 )
