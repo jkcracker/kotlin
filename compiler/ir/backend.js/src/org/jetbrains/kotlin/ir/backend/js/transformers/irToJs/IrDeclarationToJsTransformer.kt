@@ -29,7 +29,8 @@ class IrDeclarationToJsTransformer : BaseIrElementToJsNodeTransformer<JsStatemen
     }
 
     override fun visitErrorDeclaration(declaration: IrErrorDeclaration, data: JsGenerationContext): JsStatement {
-        return JsInvocation(JsNameRef("\$errorDeclaration")).makeStmt()
+        // To avoid compiler crash with UnimplementedException just in case I added this visitor to catch uncovered cases
+        return JsSingleLineComment("\$error code: declaration")
     }
 
     override fun visitField(declaration: IrField, context: JsGenerationContext): JsStatement {
