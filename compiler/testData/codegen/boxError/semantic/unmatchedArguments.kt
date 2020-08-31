@@ -6,9 +6,12 @@ var storage = ""
 
 fun bar(a: String, b: String) { storage += a; storage += b; }
 
-fun foo() {
+fun foo1() {
     bar("O", "K")
     bar("FAIL1")
+}
+
+fun foo2() {
     bar("FAIL2", "FAIL2", "FAIL2", "FAIL2")
 }
 
@@ -16,9 +19,13 @@ fun foo() {
 
 fun box(): String {
     try {
-        foo()
+        foo1()
     } catch (e: IllegalStateException) {
-        return storage
+        try {
+            foo2()
+        } catch (e: IllegalStateException) {
+            return storage
+        }
     }
     return "FAIL"
 }
