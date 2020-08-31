@@ -231,7 +231,7 @@ class JsIrBackendContext(
 
     // classes forced to be loaded
 
-    val errorSymbol: IrSimpleFunctionSymbol? =
+    val errorCodeSymbol: IrSimpleFunctionSymbol? =
         if (errorPolicy.allowErrors) symbolTable.referenceSimpleFunction(getJsInternalFunction("errorCode")) else null
 
     val primitiveClassesObject = getIrClass(FqName("kotlin.reflect.js.internal.PrimitiveClasses"))
