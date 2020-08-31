@@ -107,6 +107,14 @@ class NewConstraintSystemImpl(
         storage.postponedTypeVariables.clear()
     }
 
+    override fun markVariableWithNewExpectedType(variable: TypeVariableMarker, newExpectedType: SimpleTypeMarker) {
+        storage.variableWithNewExpectedType.put(variable, newExpectedType)
+    }
+
+    override fun getNewExpectedType(variable: TypeVariableMarker): SimpleTypeMarker? {
+        return storage.variableWithNewExpectedType[variable]
+    }
+
     override fun addSubtypeConstraint(lowerType: KotlinTypeMarker, upperType: KotlinTypeMarker, position: ConstraintPosition) =
         constraintInjector.addInitialSubtypeConstraint(
             apply { checkState(State.BUILDING, State.COMPLETION, State.TRANSACTION) },

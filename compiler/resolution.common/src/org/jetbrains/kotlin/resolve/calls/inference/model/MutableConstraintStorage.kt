@@ -202,4 +202,5 @@ internal class MutableConstraintStorage : ConstraintStorage {
     override val hasContradiction: Boolean get() = errors.any { !it.applicability.isSuccess }
     override val fixedTypeVariables: MutableMap<TypeConstructorMarker, KotlinTypeMarker> = LinkedHashMap()
     override val postponedTypeVariables: MutableList<TypeVariableMarker> = SmartList()
+    override val variableWithNewExpectedType: MutableMap<TypeVariableMarker, SimpleTypeMarker> = LinkedHashMap()
 }

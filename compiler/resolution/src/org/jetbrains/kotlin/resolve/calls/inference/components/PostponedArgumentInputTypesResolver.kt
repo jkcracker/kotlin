@@ -261,6 +261,14 @@ class PostponedArgumentInputTypesResolver(
         if (expectedType == null || expectedType.constructor !in notFixedTypeVariables)
             return null
 
+        if (getBuilder().isTypeVariable(expectedType)) {
+            val variable = getBuilder().currentStorage().allTypeVariables[expectedType.constructor]
+            val newET = getBuilder().getNewExpectedType(variable!!)
+            if (newET != null) {
+                return newET as SimpleType
+            }
+        }
+
         val atom = argument.atom
         val parametersFromConstraints = parameterTypesInfo.parametersFromConstraints
         val parametersFromDeclaration = getDeclaredParametersConsideringExtensionFunctionsPresence(parameterTypesInfo)
@@ -332,6 +340,11 @@ class PostponedArgumentInputTypesResolver(
             expectedType,
             ArgumentConstraintPositionImpl(argument.atom)
         )
+
+        if (getBuilder().isTypeVariable(expectedType)) {
+            val variable = getBuilder().currentStorage().allTypeVariables[expectedType.constructor]
+            getBuilder().markVariableWithNewExpectedType(variable!!, newExpectedType)
+        }
 
         return newExpectedType
     }
