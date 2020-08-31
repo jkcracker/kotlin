@@ -2,15 +2,16 @@
 
 // FILE: t.kt
 
-fun bar(a: String, b: String)
+fun bar(a: String, b: String): String
 
-fun foo() {
-    bar("O", "K")
+fun foo(): String {
+    return bar("O", "K")
 }
 
 // FILE: b.kt
 
 fun box(): String {
-    foo()
+    val r = foo()
+    if (r is String) return r
     return "OK"
 }
