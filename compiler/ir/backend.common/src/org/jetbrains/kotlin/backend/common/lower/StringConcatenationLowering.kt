@@ -87,35 +87,17 @@ private class StringConcatenationTransformer(val lower: StringConcatenationLower
         expression.transformChildrenVoid(this)
         val blockBuilder = buildersStack.last()
 
-        val arguments = expression.arguments
-        return when (arguments.size) {
-            0 -> blockBuilder.irString("")
-            1 -> {
-                val argument = arguments[0]
-                if (argument.type.isNullable())
-                    blockBuilder.irCall(context.ir.symbols.extensionToString).apply {
-                        extensionReceiver = argument
-                    }
-                else blockBuilder.irCall(
-                    context.irBuiltIns.anyClass.functions
-                        .single { it.owner.name.asString() == "toString" }).apply {
-                    dispatchReceiver = argument
+        return blockBuilder.irBlock(expression) {
+            val stringBuilderImpl = createTmpVariable(irCall(constructor))
+            expression.arguments.forEach { arg ->
+                val appendFunction = typeToAppendFunction(arg.type)
+                +irCall(appendFunction).apply {
+                    dispatchReceiver = irGet(stringBuilderImpl)
+                    putValueArgument(0, arg)
                 }
             }
-            else -> {
-                blockBuilder.irBlock(expression) {
-                    val stringBuilderImpl = createTmpVariable(irCall(constructor))
-                    expression.arguments.forEach { arg ->
-                        val appendFunction = typeToAppendFunction(arg.type)
-                        +irCall(appendFunction).apply {
-                            dispatchReceiver = irGet(stringBuilderImpl)
-                            putValueArgument(0, arg)
-                        }
-                    }
-                    +irCall(toStringFunction).apply {
-                        dispatchReceiver = irGet(stringBuilderImpl)
-                    }
-                }
+            +irCall(toStringFunction).apply {
+                dispatchReceiver = irGet(stringBuilderImpl)
             }
         }
     }

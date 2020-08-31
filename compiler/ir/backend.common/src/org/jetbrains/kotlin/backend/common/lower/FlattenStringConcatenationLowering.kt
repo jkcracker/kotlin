@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.builders.irCall
+import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrCall
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
 import org.jetbrains.kotlin.ir.expressions.impl.IrStringConcatenationImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -65,7 +68,7 @@ val flattenStringConcatenationPhase = makeIrFilePhase(
  *       CONST Double type=kotlin.Double value=3.0
  *       CONST Null type=kotlin.Nothing? value=null
  */
-class FlattenStringConcatenationLowering(val context: CommonBackendContext) : FileLoweringPass, IrElementTransformerVoid() {
+class FlattenStringConcatenationLowering(val context: CommonBackendContext) : FileLoweringPass, IrBuildingTransformer(context) {
 
     companion object {
         // There are two versions of String.plus in the library. One for nullable and one for non-nullable strings.
@@ -172,17 +175,37 @@ class FlattenStringConcatenationLowering(val context: CommonBackendContext) : Fi
 
     override fun visitExpression(expression: IrExpression): IrExpression {
         // Only modify/flatten string concatenation expressions.
-        val transformedExpression =
-            if (isStringConcatenationExpression(expression) || expression is IrCall && expression.isSpecialToStringCall)
-                expression.run {
+        val shouldTransform = isStringConcatenationExpression(expression)
+                || expression is IrCall && expression.isSpecialToStringCall
+        val transformedExpression = if (!shouldTransform)
+            expression
+        else {
+            builder.at(expression)
+            val arguments = collectStringConcatenationArguments(expression)
+            when (arguments.size) {
+                0 -> builder.irString("")
+                1 -> {
+                    val argument = arguments[0]
+                    if (argument.type.isNullable())
+                        builder.irCall(context.ir.symbols.extensionToString).apply {
+                            extensionReceiver = argument
+                        }
+                    else builder.irCall(
+                        context.irBuiltIns.anyClass.functions
+                            .single { it.owner.name.asString() == "toString" }).apply {
+                        dispatchReceiver = argument
+                    }
+                }
+                else -> expression.run {
                     IrStringConcatenationImpl(
                         startOffset,
                         endOffset,
                         type,
-                        collectStringConcatenationArguments(this)
+                        arguments
                     )
                 }
-            else expression
+            }
+        }
 
         transformedExpression.transformChildrenVoid(this)
         return transformedExpression
