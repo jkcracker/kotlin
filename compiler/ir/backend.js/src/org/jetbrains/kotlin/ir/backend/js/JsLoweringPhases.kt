@@ -517,14 +517,14 @@ private val multipleCatchesLoweringPhase = makeBodyLoweringPhase(
 private val errorExpressionLoweringPhase = makeBodyLoweringPhase(
     ::JsErrorExpressionLowering,
     name = "errorExpressionLoweringPhase",
-    description = "Transform error elements into simple ir code",
+    description = "Transform error expressions into simple ir code",
     prerequisite = setOf(multipleCatchesLoweringPhase)
 )
 
 private val errorDeclarationLoweringPhase = makeDeclarationTransformerPhase(
     ::JsErrorDeclarationLowering,
     name = "errorDeclarationLoweringPhase",
-    description = "Transform error elements into simple ir code"
+    description = "Transform error declarations into simple ir code"
 )
 
 private val bridgesConstructionPhase = makeDeclarationTransformerPhase(
