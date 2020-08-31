@@ -20,7 +20,7 @@ enum class ErrorTolerancePolicy(val allowSyntaxErrors: Boolean, val allowSemanti
                 "NONE" -> NONE
                 "SEMANTIC" -> SEMANTIC
                 "SYNTAX", "ALL" -> ALL
-                else -> DEFAULT
+                else -> error("Unknown error tolerance policy '$key'")
             }
         }
     }
