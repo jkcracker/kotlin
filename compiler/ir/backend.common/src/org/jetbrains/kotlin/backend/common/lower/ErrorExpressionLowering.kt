@@ -28,7 +28,7 @@ abstract class ErrorExpressionLowering(context: CommonBackendContext) : BodyLowe
 
     protected val nothingType = context.irBuiltIns.nothingType
 
-    abstract fun transformErrorExpression(expression: IrExpression, nodeString: String): IrExpression
+    abstract fun transformErrorExpression(expression: IrExpression, nodeKind: String): IrExpression
 
     override fun lower(irBody: IrBody, container: IrDeclaration) {
         irBody.transformChildrenVoid(object : IrElementTransformerVoid() {

@@ -46,9 +46,9 @@ class JsErrorExpressionLowering(context: JsIrBackendContext) : ErrorExpressionLo
     private val stringType = context.irBuiltIns.nothingType
     private val errorSymbol = context.errorSymbol
 
-    override fun transformErrorExpression(expression: IrExpression, nodeString: String): IrExpression {
+    override fun transformErrorExpression(expression: IrExpression, nodeKind: String): IrExpression {
         val errorExpression = expression as? IrErrorExpression
-        val description = errorExpression?.let { "$nodeString: ${it.description}" } ?: nodeString
+        val description = errorExpression?.let { "$nodeKind: ${it.description}" } ?: nodeKind
         return buildThrowError(expression, description)
     }
 
